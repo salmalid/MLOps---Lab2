@@ -53,13 +53,14 @@ LOG_PATH: Path = ROOT / "logs" / "predictions.log"
 app = FastAPI(title="MLOps Lab 01 - Churn API")
 
 
-# ---------------------------------------------------------------------------
-# Schéma d'entrée (Pydantic)
-# ---------------------------------------------------------------------------
+
+from typing import Optional
+from uuid import uuid4
+from pydantic import BaseModel, Field
+
 class PredictRequest(BaseModel):
     """
     Modèle de requête pour l'endpoint /predict.
-
 
     Champs
     ------
@@ -75,8 +76,8 @@ class PredictRequest(BaseModel):
         Région ("NA", "EU", "AF", "AS", ...). Normalisée en majuscules.
     request_id : Optional[str]
         Identifiant de corrélation optionnel fourni par le client.
+        Généré automatiquement si non fourni.
     """
-
 
     tenure_months: int = Field(..., ge=0, le=200)
     num_complaints: int = Field(..., ge=0, le=50)
@@ -85,6 +86,11 @@ class PredictRequest(BaseModel):
     region: str
     request_id: Optional[str] = None
 
+    # logique simple ajoutee: generate request_id if not provided
+    def _init_(self, **data):
+        super()._init_(**data)
+        if not self.request_id:
+            self.request_id = str(uuid4())
 
 
 # ---------------------------------------------------------------------------
